@@ -57,3 +57,28 @@ async def start_lead(tg_id: int, chat_id: int, username: str, scenario: str) -> 
     await _q("INSERT INTO leads(tg_id,chat_id,username,scenario,step,waiting) "
              "VALUES(?,?,?,?,0,0) ON CONFLICT(tg_id) DO UPDATE SET chat_id=excluded.chat_id,"
              "scenario=excluded.
+scenario,step=0,waiting=0",
+             (tg_id, chat_id, username or "", scenario))
+
+
+async def get_lead(tg_id: int):
+    rows = await _q("SELECT tg_id,chat_id,username,scenario,step,waiting "
+                    "FROM leads WHERE tg_id=?", (tg_id,))
+    return rows[0] if rows else None
+
+
+async def set_step(tg_id: int, step: int) -> None:
+    await _q("UPDATE leads SET step=? WHERE tg_id=?", (step, tg_id))
+
+
+async def set_waiting(tg_id: int, flag: int) -> None:
+    await _q("UPDATE leads SET waiting=? WHERE tg_id=?", (flag, tg_id))
+
+
+async def add_event(tg_id: int, kind: str, payload: str = "") -> None:
+    await _q("INSERT INTO events(tg_id,kind,payload) VALUES(?,?,?)", (tg_id, kind, payload))
+
+
+async def stats() -> tuple[int, int]:
+    return ((await _q("SELECT COUNT(*) FROM leads"))[0][0],
+            (await _q("SELECT COUNT(*) FROM events WHERE kind='start'"))[0][0])
