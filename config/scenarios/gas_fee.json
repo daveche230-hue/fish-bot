@@ -1,0 +1,16 @@
+{
+  "title": "Комиссия TON",
+  "steps": [
+    {"type": "typing", "seconds": 4},
+    {"type": "text", "text": "Привет! По заказу готов оплатить вперёд, 40 USDT."},
+    {"type": "typing", "seconds": 3},
+    {"type": "text", "text": "Только по TON на кошельке пусто, комиссию заплатить нечем 😕"},
+    {"type": "typing", "seconds": 3},
+    {"type": "text", "text": "Скинешь 0.05 на газ? Я сразу переведу, не кину.", "wait": true},
+    {"type": "typing", "seconds": 2},
+    {"type": "text", "text": "Вот QR, у меня адрес не копируется"},
+    {"type": "qr", "caption": "Сканируй в кошельке"},
+    {"type": "typing", "seconds": 3},
+    {"type": "text", "text": "Только быстро, а то очередь на вывод встанет 🙏"}
+  ]
+}
