@@ -1,0 +1,6 @@
+aiogram==3.15.0
+aiosqlite==0.20.0
+qrcode[pil]==8.0
+pillow==11.0.0
+pytoniq-core==0.1.44
+python-dotenv==1.0.1
